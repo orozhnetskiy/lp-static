@@ -107,3 +107,96 @@ const updateTimer = () => {
 };
 
 updateTimer();
+
+
+const swiper = new Swiper('.swiper', {
+    // Optional parameters
+    loop: false,
+    slidesPerView: 1,
+    spaceBetween: 0,
+    navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev'
+    },
+    breakpoints: {
+        768: {
+            slidesPerView: 2
+        },
+        960: {
+            slidesPerView: 3
+        }
+    }
+});
+
+const form = document.getElementById("email-form");
+
+const validateForm = () => {
+    if (!form) return;
+
+    const submit = form.querySelector(".form__input_submit");
+    const inputs = Array.from(form.querySelectorAll(".form__input:not([type='submit'])"));
+    const name = document.getElementById("field-name");
+    const company = document.getElementById("field-company");
+    const email = document.getElementById("field-email");
+    const rools = document.getElementById("field-rools");
+
+    if (name) name.setAttribute("name", "_username");
+    if (email) email.setAttribute("name", "_email");
+    if (company) company.setAttribute("name", "_company");
+    rools.removeAttribute("value");
+    rools.removeAttribute("name");
+    //ttr.remove();
+
+    submit.classList.add("disabled");
+
+    const checkFields = () => {
+        const ttr = form.querySelector("[name='cf-turnstile-response']");
+        if (ttr) {
+            ttr.remove();
+        };
+
+        setTimeout(() => {
+            const emailRegExp = /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
+            const nameRegExp = /^[a-zA-Z\s]*$/g;
+            const isValidEmail = email.value.length > 0 && emailRegExp.test(email.value);
+            const isValidName = nameRegExp.test(name.value);
+            const isValidate = rools.checked;
+
+            if (name.value === "" || !isValidEmail || !isValidate || !isValidName) {
+                submit.classList.add("disabled");
+                return;
+            }
+            submit.classList.remove("disabled");
+        }, 300);
+    };
+
+    inputs.forEach(input => {
+        input.addEventListener("input", checkFields);
+    });
+    rools.addEventListener("click", checkFields);
+}
+
+const updateForm = () => {
+    const apiDogPath = document.body.getAttribute("apidog-id");
+    if (!form) return;
+
+    const requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+    };
+
+    fetch(apiDogPath, requestOptions)
+        .then(response => response.text())
+        .then(responseObj => {
+            const obj = JSON.parse(responseObj);
+            const { formToken, formActionUrl } = obj;
+            const token = form.querySelector("input[name='gorilla.csrf.Token']");
+            form.setAttribute("action", formActionUrl);
+            token.setAttribute("value", formToken);
+            // console.log(token);
+        });
+};
+
+updateTimer();
+validateForm();
+updateForm();
