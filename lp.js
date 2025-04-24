@@ -109,6 +109,7 @@ const updateTimer = () => {
                     Number(parseVal(days)) === 0,
                     "hours"
                 );
+                console.log(Number(parseVal(days)) === 0);
 
                 updateString(
                     preStartTimerMinutes,
