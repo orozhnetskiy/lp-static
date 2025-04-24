@@ -1,0 +1,92 @@
+$games-list: "royal-express", "3-chillies-and-joker", "king-of-the-sky",
+  "charge-the-clovers";
+
+a.button {
+  &:after {
+    content: "";
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background: inherit;
+    border-radius: inherit;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  &:hover:after {
+    opacity: 1;
+  }
+  img {
+    z-index: 1;
+  }
+  &[disabled] {
+    opacity: 0.5;
+  }
+}
+
+.field-row {
+  .field-label {
+    &:after {
+      content: "";
+      position: absolute;
+      background-color: #131d2600;
+      backdrop-filter: blur(1000px);
+      width: calc(100% + 6px);
+      height: 5px;
+      bottom: 14px;
+      left: -3px;
+      z-index: -1;
+      opacity: 0;
+    }
+  }
+  &:has(.form__input:focus),
+  &:has(.form__input[data-gtm-form-interact-field-id]) {
+    label {
+      transform: scale(0.7) translate(-68px, -45px);
+
+      &:after {
+        filter: brightness(0.7) contrast(2.5);
+        opacity: 1;
+      }
+    }
+  }
+  &:has(.form__input[data-gtm-form-interact-field-id]) {
+    label {
+      &:after {
+        filter: brightness(0.85) contrast(1.4);
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.form__input_submit.disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.swiper-button-disabled {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}
+
+.swiper-slide_card strong {
+  color: #ffeb73;
+  font-weight: medium;
+}
+
+.games-list__cell:hover .game-card-shadow {
+  opacity: 0.5;
+  transform: scale(1);
+}
+
+@each $game in $games-list {
+  [data-game-id="#{$game}"] {
+    $i: index($games-list, $game);
+    order: #{$i};
+  }
+}
