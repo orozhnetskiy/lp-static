@@ -215,7 +215,6 @@ const updateDates = () => {
     // Форматируем дату вида "April 25th, 2025"
     function formatDate(isoString, includeYear = true) {
         const date = new Date(isoString);
-        // Берём день, месяц и год в UTC (чтобы не зависеть от таймзоны)
         const day = getOrdinal(date.getUTCDate());
         const month = date.toLocaleString("en-US", {
             month: "long",
@@ -225,11 +224,11 @@ const updateDates = () => {
         return includeYear ? `${month} ${day}, ${year}` : `${month} ${day}`;
     }
 
-    // Форматируем время вида "20:00"
     function formatTime(isoString, type = "hours") {
         const date = new Date(isoString);
-        const hh = String(date.getUTCHours()).padStart(2, "0");
-        const mm = String(date.getUTCMinutes()).padStart(2, "0");
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+        if (type === "hours") console.log(hh);
         return type === "hours" ? hh : mm;
     }
 
@@ -255,11 +254,16 @@ const updateDates = () => {
 
             if (datesInRules) {
                 datesInRules.innerHTML = `
-                ${tornamentName} starts on 
-                <strong>${formatDate(startDateTime)} 
-                at ${formatTime(endDateTime)}</strong>, 
-                and ends on <strong>${formatDate(startDateTime)} 
-                at ${formatTime(endDateTime)}</strong>.`;
+                    ${tornamentName} starts on 
+                    <strong>${formatDate(startDateTime)} 
+                    at ${formatTime(startDateTime)}:${formatTime(
+                    startDateTime,
+                    "minutes"
+                )}</strong>, and ends on <strong>${formatDate(endDateTime)} 
+                    at ${formatTime(endDateTime)}:${formatTime(
+                    endDateTime,
+                    "minutes"
+                )}</strong>.`;
             }
 
             if (startDate)
@@ -280,8 +284,8 @@ const updateDates = () => {
                 )}`;
 
             if (timeZones.length > 0) {
-                timeZones.forEach(z => {
-                    z.innerText = timeZone
+                timeZones.forEach((z) => {
+                    z.innerText = timeZone;
                 });
             }
 
@@ -319,15 +323,22 @@ const updateDates = () => {
             const updateRangeBetweenDates = () => {
                 const sD = new Date(startDateTime);
                 const eD = new Date(endDateTime);
+                const tD = document.getElementById("time-duration");
+                if (!tD) return;
 
                 const diffInMs = eD - sD;
 
-                const diffInDays = Math.floor(diffInMs / (1000 * 60));
+                const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
                 const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-                const diffInMinutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60));
+                const diffInMinutes = Math.floor(
+                    (diffInMs % (1000 * 60 * 60)) / (1000 * 60)
+                );
 
-                console.log(`${diffInDays}d ${diffInHours}h ${diffInMinutes}m`);
-            }
+                const string = `${diffInDays > 0 ? diffInDays + "d " : ""}${diffInHours > 0 ? diffInHours + "h " : ""
+                    }${diffInMinutes}m`;
+
+                tD.innerText = string;
+            };
             updateRangeBetweenDates();
         });
 };
