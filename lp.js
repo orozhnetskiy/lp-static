@@ -244,35 +244,46 @@ const updateDates = () => {
                 timeZone,
                 formActionUrl
             } = obj;
+
             const datesInRules = document.getElementById("start-end-dates");
             const startDate = document.getElementById("start-date");
             const endDate = document.getElementById("end-date");
             const startTime = document.getElementById("start-time");
             const endTime = document.getElementById("end-time");
             const gCalBtn = document.getElementById("google-cal-link");
+            const timeZones = document.querySelectorAll(".time-zone");
 
             if (datesInRules) {
                 datesInRules.innerHTML = `
-          ${tornamentName} starts on 
-          <strong>${formatDate(startDateTime)} 
-          at ${formatTime(endDateTime)}</strong>, 
-          and ends on <strong>${formatDate(startDateTime)} 
-          at ${formatTime(endDateTime)}</strong>.`;
+                ${tornamentName} starts on 
+                <strong>${formatDate(startDateTime)} 
+                at ${formatTime(endDateTime)}</strong>, 
+                and ends on <strong>${formatDate(startDateTime)} 
+                at ${formatTime(endDateTime)}</strong>.`;
             }
 
             if (startDate)
                 startDate.innerHTML = `${formatDate(startDateTime, false)}`;
+
             if (endDate) endDate.innerHTML = `${formatDate(endDateTime, false)}`;
+
             if (startTime)
                 startTime.innerHTML = `${formatTime(startDateTime)}:${formatTime(
                     startDateTime,
                     "minutes"
                 )}`;
+
             if (endTime)
                 endTime.innerHTML = `${formatTime(endDateTime)}:${formatTime(
                     endDateTime,
                     "minutes"
                 )}`;
+
+            if (timeZones.length > 0) {
+                timeZones.forEach(z => {
+                    z.innerText = timeZone
+                });
+            }
 
             const timeInTimeZone = moment.tz(timeZone);
             const offsetMinutes = timeInTimeZone.utcOffset();
