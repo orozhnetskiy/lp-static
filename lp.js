@@ -315,6 +315,20 @@ const updateDates = () => {
                         .replaceAll("&", "and")}&location=${formActionUrl}&trp=true`;
 
             if (gCalBtn) gCalBtn.href = googleCalendarLink;
+
+            const updateRangeBetweenDates = () => {
+                const sD = new Date(startDateTime);
+                const eD = new Date(endDateTime);
+
+                const diffInMs = eD - sD;
+
+                const diffInDays = Math.floor(diffInMs / (1000 * 60));
+                const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+                const diffInMinutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                console.log(`${diffInDays}d ${diffInHours}h ${diffInMinutes}m`);
+            }
+            updateRangeBetweenDates();
         });
 };
 
