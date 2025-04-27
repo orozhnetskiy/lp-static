@@ -228,7 +228,6 @@ const updateDates = () => {
         const date = new Date(isoString);
         const hh = String(date.getHours()).padStart(2, "0");
         const mm = String(date.getMinutes()).padStart(2, "0");
-        if (type === "hours") console.log(hh);
         return type === "hours" ? hh : mm;
     }
 
