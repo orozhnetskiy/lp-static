@@ -162,6 +162,7 @@ const updateTimer = () => {
             function updateDisplay(remainingS) {
                 if (remainingS < 0) {
                     document.querySelector("#timer-section").style.display = "none";
+                    window.location.reload();
                     clearTimeout(timerId);
                     return;
                 }
