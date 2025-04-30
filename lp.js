@@ -1,5 +1,34 @@
 const apiDogPath = document.body.getAttribute("apidog-id");
 
+const initScheduleTabs = () => {
+    const scheduleTabs = document.getElementById("schedule-render");
+    // console.log(scheduleTabs);
+    const ACTIVE = "w--current";
+    if (!scheduleTabs) return;
+    const tabs = scheduleTabs.querySelectorAll(".schedule-tabs_button");
+
+    if (tabs.length < 2) return;
+    document.addEventListener("click", (e) => {
+        const currTab = e.target.closest(".schedule-tabs_button");
+        if (currTab.classList.contains(ACTIVE)) return;
+        const activeTab = scheduleTabs.querySelector(
+            `.schedule-tabs_button.${ACTIVE}`
+        );
+        const activeSection = scheduleTabs.querySelector(
+            `.schedule-tabs_section.${ACTIVE}`
+        );
+        const currSection = scheduleTabs.querySelector(
+            `.schedule-tabs_section[data-schedule-tab='${Array.from(tabs).indexOf(
+                currTab
+            )}']`
+        );
+        activeTab.classList.remove(ACTIVE);
+        activeSection.classList.remove(ACTIVE);
+        currTab.classList.add(ACTIVE);
+        currSection.classList.add(ACTIVE);
+    });
+};
+
 const requestOptions = {
     method: "GET",
     redirect: "follow"
@@ -148,8 +177,16 @@ const updateTimer = () => {
             const secsEl = D("pre-start-timer-seconds");
 
             async function syncWithServer() {
-                const resp = await fetch(apiDogPath, { method: "GET", redirect: "follow" });
-                const { startDateTime, endDateTime, timeZone, currentTime } = await resp.json();
+                const resp = await fetch(apiDogPath, {
+                    method: "GET",
+                    redirect: "follow"
+                });
+                const {
+                    startDateTime,
+                    endDateTime,
+                    timeZone,
+                    currentTime
+                } = await resp.json();
 
                 const serverNowMs = new Date(currentTime).getTime();
                 const clientNowMs = Date.now();
@@ -172,12 +209,13 @@ const updateTimer = () => {
                 const minutes = Math.floor((remainingS % 3600) / 60);
                 const seconds = remainingS % 60;
 
-                const pad = n => n.toString().padStart(2, "0");
+                const pad = (n) => n.toString().padStart(2, "0");
 
-                [[daysEl, days],
-                [hoursEl, hours],
-                [minsEl, minutes],
-                [secsEl, seconds]
+                [
+                    [daysEl, days],
+                    [hoursEl, hours],
+                    [minsEl, minutes],
+                    [secsEl, seconds]
                 ].forEach(([el, val]) => {
                     const newVal = pad(val);
                     if (el.dataset.number !== newVal) {
@@ -220,7 +258,7 @@ const updateTimer = () => {
                 });
             })();
         });
-}
+};
 
 const swiper = new Swiper(".swiper", {
     // Optional parameters
@@ -306,34 +344,192 @@ const updateForm = () => {
         });
 };
 
+// const updateDates = () => {
+//   function getOrdinal(day) {
+//     const j = day % 10,
+//       k = day % 100;
+//     if (j === 1 && k !== 11) return day + "st";
+//     if (j === 2 && k !== 12) return day + "nd";
+//     if (j === 3 && k !== 13) return day + "rd";
+//     return day + "th";
+//   }
+
+//   // Форматируем дату вида "April 25th, 2025"
+//   function formatDate(isoString, includeYear = true) {
+//     const date = new Date(isoString);
+//     const day = getOrdinal(date.getUTCDate());
+//     const month = date.toLocaleString("en-US", {
+//       month: "long",
+//       timeZone: "UTC"
+//     });
+//     const year = date.getUTCFullYear();
+//     return includeYear ? `${month} ${day}, ${year}` : `${month} ${day}`;
+//   }
+
+//   function formatTime(isoString, type = "hours") {
+//     const date = new Date(isoString);
+//     const hh = String(date.getHours()).padStart(2, "0");
+//     const mm = String(date.getMinutes()).padStart(2, "0");
+//     return type === "hours" ? hh : mm;
+//   }
+
+//   fetch(apiDogPath, requestOptions)
+//     .then((response) => response.text())
+//     .then((responseObj) => {
+//       const obj = JSON.parse(responseObj);
+//       const {
+//         startDateTime,
+//         endDateTime,
+//         tornamentName,
+//         timeZone,
+//         formActionUrl,
+//         schedule
+//       } = obj;
+
+//       const datesInRules = document.getElementById("start-end-dates");
+//       const startDate = document.getElementById("start-date");
+//       const endDate = document.getElementById("end-date");
+//       const startTime = document.querySelectorAll("[data-set-time='start']");
+//       const endTime = document.querySelectorAll("[data-set-time='end']");
+//       const gCalBtn = document.getElementById("google-cal-link");
+//       const timeZones = document.querySelectorAll(".time-zone");
+
+//       const wholePeriodBetweenDates = schedule.wholePeriodBetweenDates === true;
+//       const keys = Object.keys(schedule.dateAndTime);
+
+//       const dateStringToObj = (str) => {
+//         let dateObj = {};
+//         const dateArr = str.split("/")[0].split(",");
+//         const timeArr = str.split("/")[1].split("-");
+//         dateObj.date = dateArr[0];
+//         dateObj.year = dateArr[1].replaceAll(" ", "");
+//         dateObj.startTime = timeArr[0].replaceAll(" ", "");
+//         dateObj.endTime =
+//           timeArr.length > 1
+//             ? timeArr[1].replaceAll(" ", "")
+//             : timeArr[0].replaceAll(" ", "");
+//         return dateObj;
+//       };
+
+//       if (datesInRules) {
+//         if (wholePeriodBetweenDates) {
+//           const sd = dateStringToObj(schedule.dateAndTime[keys[0]]);
+//           const ed = dateStringToObj(
+//             schedule.dateAndTime[keys[keys.length - 1]]
+//           );
+//           datesInRules.innerHTML = `
+//           ${tornamentName} starts on <strong>${sd.date}, ${sd.year} at ${sd.startTime}</strong>, and ends on <strong>${ed.date}, ${ed.year} at ${ed.endTime}</strong>.
+//           `;
+//         } else {
+//           let resultStr = "";
+//           keys.forEach((key) => {
+//             console.log(schedule.dateAndTime[key]);
+//             const d = dateStringToObj(schedule.dateAndTime[key]);
+//             resultStr += `
+//                ${tornamentName} ${key} starts on <strong>${d.date}, ${d.year} at ${d.startTime}</strong>, and ends on <strong>${d.date}, ${d.year} at ${d.endTime}</strong>.<br>&nbsp;<br>
+//           `;
+//             datesInRules.innerHTML = resultStr;
+//           });
+//         }
+//       }
+
+//       if (startDate) {
+//         const sd = dateStringToObj(schedule.dateAndTime[keys[0]]);
+//         startDate.innerHTML = `${sd.date}`;
+//       }
+
+//       if (endDate) {
+//         const ed = dateStringToObj(schedule.dateAndTime[keys[keys.length - 1]]);
+//         endDate.innerHTML = `${ed.date}`;
+//       }
+
+//       const findInex = (e) => {
+//         const elWrapper = e.closest(".w-tab-content");
+//         const elParent = e.closest(".w-tab-pane");
+//         const elIndex = Array.from(
+//           elWrapper.querySelectorAll(".w-tab-pane")
+//         ).indexOf(elParent);
+//         return elIndex;
+//       };
+
+//       if (startTime.length > 0) {
+//         startTime.forEach((e) => {
+//           const sd = dateStringToObj(schedule.dateAndTime[keys[findInex(e)]]);
+//           e.innerHTML = `${sd.startTime}`;
+//         });
+//       }
+
+//       if (endTime.length > 0) {
+//         endTime.forEach((e) => {
+//           const sd = dateStringToObj(schedule.dateAndTime[keys[findInex(e)]]);
+//           e.innerHTML = `${sd.endTime}`;
+//         });
+//       }
+
+//       if (timeZones.length > 0) {
+//         timeZones.forEach((z) => {
+//           z.innerText = timeZone;
+//         });
+//       }
+
+//       const timeInTimeZone = moment.tz(timeZone);
+//       const offsetMinutes = timeInTimeZone.utcOffset();
+//       const offsetHours = offsetMinutes / 60;
+
+//       function offsetTime(isoStr) {
+//         const timeToArray = String(isoStr).slice(-8).split(":");
+//         let newTime =
+//           Number(timeToArray[0]) - offsetHours > 24
+//             ? Number(timeToArray[0]) - offsetHours - 24
+//             : Number(timeToArray[0]) - offsetHours;
+//         if (newTime.length > 1) {
+//           newTime = `0${newTime}`;
+//         }
+//         timeToArray[0] = newTime;
+//         return timeToArray.join("");
+//       }
+
+//       const googleCalendarLink = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${tornamentName
+//         .replaceAll(" ", "+")
+//         .replaceAll("&", "and")}&dates=${startDateTime
+//         .substr(0, 10)
+//         .replaceAll("-", "")}T${offsetTime(
+//         startDateTime
+//       )}Z/${endDateTime.substr(0, 10).replaceAll("-", "")}T${offsetTime(
+//         endDateTime
+//       )}Z&details=${tornamentName
+//         .replaceAll(" ", "+")
+//         .replaceAll("&", "and")}&location=${formActionUrl}&trp=true`;
+
+//       if (gCalBtn) gCalBtn.href = googleCalendarLink;
+
+//       const updateRangeBetweenDates = () => {
+//         const sD = new Date(startDateTime);
+//         const eD = new Date(endDateTime);
+//         const tD = document.getElementById("time-duration");
+//         if (!tD) return;
+
+//         const diffInMs = eD - sD;
+
+//         const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+//         const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+//         const diffInMinutes = Math.floor(
+//           (diffInMs % (1000 * 60 * 60)) / (1000 * 60)
+//         );
+
+//         const string = `${diffInDays > 0 ? diffInDays + "d " : ""}${
+//           diffInHours > 0 ? diffInHours + "h " : ""
+//         }${diffInMinutes}m`;
+
+//         tD.innerText = string;
+//       };
+//       updateRangeBetweenDates();
+//     });
+// };
+
 const updateDates = () => {
-    function getOrdinal(day) {
-        const j = day % 10,
-            k = day % 100;
-        if (j === 1 && k !== 11) return day + "st";
-        if (j === 2 && k !== 12) return day + "nd";
-        if (j === 3 && k !== 13) return day + "rd";
-        return day + "th";
-    }
-
-    // Форматируем дату вида "April 25th, 2025"
-    function formatDate(isoString, includeYear = true) {
-        const date = new Date(isoString);
-        const day = getOrdinal(date.getUTCDate());
-        const month = date.toLocaleString("en-US", {
-            month: "long",
-            timeZone: "UTC"
-        });
-        const year = date.getUTCFullYear();
-        return includeYear ? `${month} ${day}, ${year}` : `${month} ${day}`;
-    }
-
-    function formatTime(isoString, type = "hours") {
-        const date = new Date(isoString);
-        const hh = String(date.getHours()).padStart(2, "0");
-        const mm = String(date.getMinutes()).padStart(2, "0");
-        return type === "hours" ? hh : mm;
-    }
+    const target = document.getElementById("schedule-render");
+    if (!target) return;
 
     fetch(apiDogPath, requestOptions)
         .then((response) => response.text())
@@ -344,111 +540,183 @@ const updateDates = () => {
                 endDateTime,
                 tornamentName,
                 timeZone,
-                formActionUrl
+                formActionUrl,
+                schedule
             } = obj;
 
+            const keys = Object.keys(schedule.dateAndTime);
+            const datesLength = Object.keys(schedule.dateAndTime).length;
+            const wholePeriodBetweenDates =
+                schedule.wholePeriodBetweenDates && datesLength === 2;
             const datesInRules = document.getElementById("start-end-dates");
-            const startDate = document.getElementById("start-date");
-            const endDate = document.getElementById("end-date");
-            const startTime = document.querySelectorAll("[data-set-time='start']");
-            const endTime = document.querySelectorAll("[data-set-time='end']");
-            const gCalBtn = document.getElementById("google-cal-link");
-            const timeZones = document.querySelectorAll(".time-zone");
+
+            const dateStringToObj = (str) => {
+                let dateObj = {};
+                const dateArr = str.split("/")[0].split(",");
+                const timeArr = str.split("/")[1].split("-");
+                dateObj.date = dateArr[0];
+                dateObj.year = dateArr[1].replaceAll(" ", "");
+                dateObj.startTime = timeArr[0].replaceAll(" ", "");
+                dateObj.endTime =
+                    timeArr.length > 1
+                        ? timeArr[1].replaceAll(" ", "")
+                        : timeArr[0].replaceAll(" ", "");
+                return dateObj;
+            };
 
             if (datesInRules) {
-                datesInRules.innerHTML = `
-                    ${tornamentName} starts on 
-                    <strong>${formatDate(startDateTime)} 
-                    at ${formatTime(startDateTime)}:${formatTime(
-                    startDateTime,
-                    "minutes"
-                )}</strong>, and ends on <strong>${formatDate(endDateTime)} 
-                    at ${formatTime(endDateTime)}:${formatTime(
-                    endDateTime,
-                    "minutes"
-                )}</strong>.`;
-            }
-
-            if (startDate)
-                startDate.innerHTML = `${formatDate(startDateTime, false)}`;
-
-            if (endDate) endDate.innerHTML = `${formatDate(endDateTime, false)}`;
-
-            if (startTime.length > 0) {
-                startTime.forEach(e => {
-                    e.innerHTML = `${formatTime(startDateTime)}:${formatTime(
-                        startDateTime,
-                        "minutes"
-                    )}`;
-                })
-            }
-
-            if (endTime.length > 0) {
-                endTime.forEach(e => {
-                    e.innerHTML = `${formatTime(endDateTime)}:${formatTime(
-                        endDateTime,
-                        "minutes"
-                    )}`;
-                })
-            }
-
-            if (timeZones.length > 0) {
-                timeZones.forEach((z) => {
-                    z.innerText = timeZone;
-                });
-            }
-
-            const timeInTimeZone = moment.tz(timeZone);
-            const offsetMinutes = timeInTimeZone.utcOffset();
-            const offsetHours = offsetMinutes / 60;
-
-            function offsetTime(isoStr) {
-                const timeToArray = String(isoStr).slice(-8).split(":");
-                let newTime =
-                    Number(timeToArray[0]) - offsetHours > 24
-                        ? Number(timeToArray[0]) - offsetHours - 24
-                        : Number(timeToArray[0]) - offsetHours;
-                if (newTime.length > 1) {
-                    newTime = `0${newTime}`;
+                if (wholePeriodBetweenDates) {
+                    const sd = dateStringToObj(schedule.dateAndTime[keys[0]]);
+                    const ed = dateStringToObj(
+                        schedule.dateAndTime[keys[keys.length - 1]]
+                    );
+                    datesInRules.innerHTML = `
+          ${tornamentName} starts on <strong>${sd.date}, ${sd.year} at ${sd.startTime}</strong>, and ends on <strong>${ed.date}, ${ed.year} at ${ed.endTime}</strong>.
+          `;
+                } else {
+                    let resultStr = "";
+                    keys.forEach((key) => {
+                        console.log(schedule.dateAndTime[key]);
+                        const d = dateStringToObj(schedule.dateAndTime[key]);
+                        resultStr += `
+               ${tornamentName} ${key} starts on <strong>${d.date}, ${d.year} at ${d.startTime}</strong>, and ends on <strong>${d.date}, ${d.year} at ${d.endTime}</strong>.<br>&nbsp;<br>
+          `;
+                        datesInRules.innerHTML = resultStr;
+                    });
                 }
-                timeToArray[0] = newTime;
-                return timeToArray.join("");
             }
 
-            const googleCalendarLink = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${tornamentName
-                .replaceAll(" ", "+")
-                .replaceAll("&", "and")}&dates=${startDateTime
-                    .substr(0, 10)
-                    .replaceAll("-", "")}T${offsetTime(
-                        startDateTime
-                    )}Z/${endDateTime.substr(0, 10).replaceAll("-", "")}T${offsetTime(
-                        endDateTime
-                    )}Z&details=${tornamentName
-                        .replaceAll(" ", "+")
-                        .replaceAll("&", "and")}&location=${formActionUrl}&trp=true`;
+            const renderSingleDate = ``;
 
-            if (gCalBtn) gCalBtn.href = googleCalendarLink;
+            const renderMultipleDates = () => {
+                const tabButtons = () => {
+                    let render = "";
+                    keys.forEach((key, index) => {
+                        const d = dateStringToObj(schedule.dateAndTime[key]);
+                        render += `<div class="schedule-tabs_button${index === 0 && datesLength > 1 ? " w--current" : ""
+                            }">${d.date}</div>`;
+                    });
+                    return render;
+                };
 
-            const updateRangeBetweenDates = () => {
-                const sD = new Date(startDateTime);
-                const eD = new Date(endDateTime);
-                const tD = document.getElementById("time-duration");
-                if (!tD) return;
+                const tabSections = () => {
+                    let render = "";
+                    keys.forEach((key, index) => {
+                        const d = dateStringToObj(schedule.dateAndTime[key]);
+                        const sh = Number(d.startTime.split(":")[0]);
+                        const sm = Number(d.startTime.split(":")[1]);
+                        const eh = Number(d.endTime.split(":")[0]);
+                        const em = Number(d.endTime.split(":")[1]);
+                        const rangeInMin = eh * 60 + em - (sh * 60 + sm);
+                        const rangeStr = `
+              ${Math.round(rangeInMin / 60)}h${rangeInMin % 60 > 0 ? ` ${rangeInMin % 60}m` : ""
+                            }`;
 
-                const diffInMs = eD - sD;
+                        render += `
+              <div class="schedule-tabs_section${index === 0 ? " w--current" : ""
+                            }" data-schedule-tab='${index}'>
+                <div class="schedule">
+                  <div class="schedule-column">
+                    <div class="schedule_overline">Starts</div>
+                    <div data-wf--time-component--variant="base" class="schedule_accent-text-copy">
+                      <div class="schedule_accent-text">
+                        <div>${d.startTime}</div>
+                        <div class="schedule_time-zone time-zone">${timeZone}</div>
+                      </div>
+                      <div class="schedule_arrow">
+                        <img src="https://cdn.prod.website-files.com/677bda6af407d3b963833347/679a90ea91fa31d2c75394c0_time-arrow.svg" loading="lazy" alt="" class="schedule_arrow-direction">
+                        <div class="schedule_time-length">${rangeStr}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="schedule-column blue">
+                    <div class="schedule_overline">Ends</div>
+                    <div data-wf--time-component--variant="base" class="schedule_accent-text-copy">
+                      <div class="schedule_accent-text">
+                        <div>${d.endTime}</div>
+                        <div class="schedule_time-zone time-zone">${timeZone}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+                    });
+                    return render;
+                };
 
-                const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-                const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-                const diffInMinutes = Math.floor(
-                    (diffInMs % (1000 * 60 * 60)) / (1000 * 60)
-                );
-
-                const string = `${diffInDays > 0 ? diffInDays + "d " : ""}${diffInHours > 0 ? diffInHours + "h " : ""
-                    }${diffInMinutes}m`;
-
-                tD.innerText = string;
+                return `
+        <div class="schedule-tabs">
+          <div class="schedule-tabs_buttons">
+            ${tabButtons()}
+          </div>
+          <div class="schedule-tabs_sections">
+            ${tabSections()}
+          </div>
+        </div>
+      `;
             };
-            updateRangeBetweenDates();
+
+            const renderPeriod = () => {
+                const d = dateStringToObj(schedule.dateAndTime[keys[0]]);
+                const ed = dateStringToObj(schedule.dateAndTime[keys[keys.length - 1]]);
+                const sh = Number(d.startTime.split(":")[0]);
+                const sm = Number(d.startTime.split(":")[1]);
+                const eh = Number(d.endTime.split(":")[0]);
+                const em = Number(d.endTime.split(":")[1]);
+                const rangeInMin = eh * 60 + em - (sh * 60 + sm);
+                const rangeStr = `
+            ${Math.round(rangeInMin / 60)}h${rangeInMin % 60 > 0 ? ` ${rangeInMin % 60}m` : ""
+                    }`;
+
+                return `
+        <div class="schedule-tabs">
+          <div class="schedule-tabs_sections">
+              <div class="schedule-tabs_section w--current">
+                <div class="schedule">
+                  <div class="schedule-column">
+                    <div class="schedule_overline">Starts</div>
+                    <div class="schedule_accent-text-copy">
+                      <div class="schedule_accent-text">
+                        <div>${d.date}</div>
+                      </div>
+                      <div class="schedule_arrow">
+                        <img src="https://cdn.prod.website-files.com/677bda6af407d3b963833347/679a90ea91fa31d2c75394c0_time-arrow.svg" loading="lazy" alt="" class="schedule_arrow-direction">
+                        <div class="schedule_time-length">${rangeStr}</div>
+                      </div>
+                    </div>
+                    <div class="schedule_accent-text-copy w-variant-41b5da7b-60b7-5e82-beda-c4fd270bda0e">
+                      <div class="schedule_accent-text w-variant-41b5da7b-60b7-5e82-beda-c4fd270bda0e">
+                        <div id="start-time">${d.startTime}</div>
+                        <div class="schedule_time-zone time-zone">${timeZone}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="schedule-column blue">
+                    <div class="schedule_overline">Ends</div>
+                    <div class="schedule_accent-text-copy">
+                      <div class="schedule_accent-text">
+                        <div>${ed.date}</div>
+                      </div>
+                    </div>
+                    <div class="schedule_accent-text-copy w-variant-41b5da7b-60b7-5e82-beda-c4fd270bda0e">
+                      <div class="schedule_accent-text w-variant-41b5da7b-60b7-5e82-beda-c4fd270bda0e">
+                        <div id="start-time">${ed.endTime}</div>
+                        <div class="schedule_time-zone time-zone">${timeZone}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
+      `;
+            };
+
+            target.innerHTML = !wholePeriodBetweenDates
+                ? renderMultipleDates()
+                : renderPeriod();
+            initScheduleTabs();
         });
 };
 
@@ -474,7 +742,7 @@ const updateLeaderBoard = () => {
             const sayMyNameStateBoolean = sayMyNameState === "true";
             winnersNum = winners;
             const path = `https://viewboard.app/v1/${turnamentType}/leaderboard?id=`;
-            const sayMyName = sayMyNameStateBoolean ? "&sayMyName=MisterWhite" : "";
+            const sayMyName = sayMyNameState ? "&sayMyName=MisterWhite" : "";
             const url = `${path}${id}${sayMyName}&limit=${widgetLimitLoginPage}`;
             let interval = Number(updateIntervalSec);
             let loaded = false;
@@ -535,6 +803,13 @@ const updateLeaderBoard = () => {
                         const cutLength = p1.length > 20 ? 8 : p1.length > 10 ? 5 : 3;
                         return p1.slice(0, p1.length - cutLength) + "...@" + p2;
                     };
+                    const isEmail = (email) => {
+                        return String(email)
+                            .toLowerCase()
+                            .match(
+                                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                            );
+                    };
                     switch (key) {
                         case "type":
                             value =
@@ -547,7 +822,9 @@ const updateLeaderBoard = () => {
               `;
                             break;
                         case "name":
-                            value = maskEmail(row[key]);
+                            value = isEmail(value)
+                                ? maskEmail(row[key])
+                                : row[key].replaceAll("|", "");
                             break;
                         case "currency":
                             break;
@@ -592,7 +869,6 @@ const updateLeaderBoard = () => {
         lw.innerHTML = newMarkup;
     };
 };
-
 
 updateDates();
 updateTimer();
