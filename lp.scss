@@ -1,5 +1,5 @@
-$games-list: "royal-express", "3-chillies-and-joker", "king-of-the-sky",
-    "charge-the-clovers";
+// $games-list: "royal-express", "3-chillies-and-joker", "king-of-the-sky",
+//     "charge-the-clovers";
 
 a.button {
     &:after {
@@ -89,12 +89,12 @@ a.button {
     transform: scale(1);
 }
 
-@each $game in $games-list {
-    [data-game-id="#{$game}"] {
-        $i: index($games-list, $game);
-        order: #{$i};
-    }
-}
+// @each $game in $games-list {
+//     [data-game-id="#{$game}"] {
+//         $i: index($games-list, $game);
+//         order: #{$i};
+//     }
+// }
 
 .leaderbord-table .leaderbord-tr {
     background-color: rgba(255, 255, 255, .03);

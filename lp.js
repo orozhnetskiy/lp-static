@@ -350,8 +350,8 @@ const updateDates = () => {
             const datesInRules = document.getElementById("start-end-dates");
             const startDate = document.getElementById("start-date");
             const endDate = document.getElementById("end-date");
-            const startTime = document.getElementById("start-time");
-            const endTime = document.getElementById("end-time");
+            const startTime = document.querySelectorAll("[data-set-time='start']");
+            const endTime = document.querySelectorAll("[data-set-time='end']");
             const gCalBtn = document.getElementById("google-cal-link");
             const timeZones = document.querySelectorAll(".time-zone");
 
@@ -374,17 +374,23 @@ const updateDates = () => {
 
             if (endDate) endDate.innerHTML = `${formatDate(endDateTime, false)}`;
 
-            if (startTime)
-                startTime.innerHTML = `${formatTime(startDateTime)}:${formatTime(
-                    startDateTime,
-                    "minutes"
-                )}`;
+            if (startTime.length > 0) {
+                startTime.forEach(e => {
+                    e.innerHTML = `${formatTime(startDateTime)}:${formatTime(
+                        startDateTime,
+                        "minutes"
+                    )}`;
+                })
+            }
 
-            if (endTime)
-                endTime.innerHTML = `${formatTime(endDateTime)}:${formatTime(
-                    endDateTime,
-                    "minutes"
-                )}`;
+            if (endTime.length > 0) {
+                endTime.forEach(e => {
+                    e.innerHTML = `${formatTime(endDateTime)}:${formatTime(
+                        endDateTime,
+                        "minutes"
+                    )}`;
+                })
+            }
 
             if (timeZones.length > 0) {
                 timeZones.forEach((z) => {
