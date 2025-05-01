@@ -2,7 +2,6 @@ const apiDogPath = document.body.getAttribute("apidog-id");
 
 const initScheduleTabs = () => {
     const scheduleTabs = document.getElementById("schedule-render");
-    // console.log(scheduleTabs);
     const ACTIVE = "w--current";
     if (!scheduleTabs) return;
     const tabs = scheduleTabs.querySelectorAll(".schedule-tabs_button");
@@ -139,126 +138,6 @@ const requestOptions = {
 //             }, 1000);
 //         });
 // };
-
-const updateTimer = () => {
-    fetch(apiDogPath, requestOptions)
-        .then((response) => response.text())
-        .then((responseObj) => {
-            const obj = JSON.parse(responseObj);
-            const { startDateTime, endDateTime, timeZone, currentTime } = obj;
-            const targetMoment = moment.tz(startDateTime, timeZone);
-            const targetEndMoment = moment.tz(endDateTime, timeZone);
-            const targetSection = document.querySelector("#timer-section");
-            const leaderBoardSection = document.querySelector("#section-leaderboard");
-            const formSection = document.querySelector("#section-form");
-            if (!targetSection) return;
-            const now = Math.floor(new Date(currentTime).getTime() / 1000);
-            let interval =
-                Math.floor(new Date(targetMoment._i).getTime() / 1000) - now;
-            let endInterval =
-                Math.floor(new Date(targetEndMoment._i).getTime() / 1000) - now;
-            if (interval > 0 || endInterval <= 0) {
-                leaderBoardSection.style.display = "none";
-                formSection.style.display = "none";
-            }
-            if (interval <= 0) {
-                targetSection.style.display = "none";
-                return;
-            }
-            let offset = 0;
-            let targetStartMs = 0;
-            let targetEndMs = 0;
-            let timerId = null;
-
-            const D = document.getElementById.bind(document);
-            const daysEl = D("pre-start-timer-days");
-            const hoursEl = D("pre-start-timer-hours");
-            const minsEl = D("pre-start-timer-minutes");
-            const secsEl = D("pre-start-timer-seconds");
-
-            async function syncWithServer() {
-                const resp = await fetch(apiDogPath, {
-                    method: "GET",
-                    redirect: "follow"
-                });
-                const {
-                    startDateTime,
-                    endDateTime,
-                    timeZone,
-                    currentTime
-                } = await resp.json();
-
-                const serverNowMs = new Date(currentTime).getTime();
-                const clientNowMs = Date.now();
-
-                offset = serverNowMs - clientNowMs;
-                targetStartMs = moment.tz(startDateTime, timeZone).valueOf();
-                targetEndMs = moment.tz(endDateTime, timeZone).valueOf();
-            }
-
-            function updateDisplay(remainingS) {
-                if (remainingS < 0) {
-                    document.querySelector("#timer-section").style.display = "none";
-                    window.location.reload();
-                    clearTimeout(timerId);
-                    return;
-                }
-
-                const days = Math.floor(remainingS / 86400);
-                const hours = Math.floor((remainingS % 86400) / 3600);
-                const minutes = Math.floor((remainingS % 3600) / 60);
-                const seconds = remainingS % 60;
-
-                const pad = (n) => n.toString().padStart(2, "0");
-
-                [
-                    [daysEl, days],
-                    [hoursEl, hours],
-                    [minsEl, minutes],
-                    [secsEl, seconds]
-                ].forEach(([el, val]) => {
-                    const newVal = pad(val);
-                    if (el.dataset.number !== newVal) {
-                        el.dataset.prevNumber = el.dataset.number;
-                        el.dataset.number = newVal;
-                        el.classList.add("animated");
-                        setTimeout(() => {
-                            el.textContent = newVal;
-                            el.classList.remove("animated");
-                        }, 500);
-                    }
-                });
-            }
-
-            function startTimerLoop() {
-                function tick() {
-                    const nowMs = Date.now() + offset;
-                    const remainingS = Math.floor((targetStartMs - nowMs) / 1000);
-
-                    updateDisplay(remainingS);
-
-                    if (remainingS >= 0) {
-                        const msUntilNextFullSec = 1000 - ((Date.now() + offset) % 1000);
-                        timerId = setTimeout(tick, msUntilNextFullSec);
-                    }
-                }
-                tick();
-            }
-
-            (async function init() {
-                await syncWithServer();
-                startTimerLoop();
-
-                setInterval(syncWithServer, 60_000);
-
-                document.addEventListener("visibilitychange", () => {
-                    if (!document.hidden) {
-                        syncWithServer();
-                    }
-                });
-            })();
-        });
-};
 
 const swiper = new Swiper(".swiper", {
     // Optional parameters
@@ -423,7 +302,6 @@ const updateForm = () => {
 //         } else {
 //           let resultStr = "";
 //           keys.forEach((key) => {
-//             console.log(schedule.dateAndTime[key]);
 //             const d = dateStringToObj(schedule.dateAndTime[key]);
 //             resultStr += `
 //                ${tornamentName} ${key} starts on <strong>${d.date}, ${d.year} at ${d.startTime}</strong>, and ends on <strong>${d.date}, ${d.year} at ${d.endTime}</strong>.<br>&nbsp;<br>
@@ -527,13 +405,13 @@ const updateForm = () => {
 //     });
 // };
 
-function toIso(str) {
-    const regex = /(\d+)(?:st|nd|rd|th)\s+([A-Za-z]+),\s+(\d{4})\s*\/\s*(\d{1,2}:\d{2})/;
+function toIso(str, startDate = true) {
+    const regex = /(\d+)(?:st|nd|rd|th)\s+([A-Za-z]+),\s+(\d{4})\s*\/\s*(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/;
     const m = str.match(regex);
     if (!m) {
         throw new Error("Не удалось распознать дату: " + str);
     }
-    const [, day, monthName, year, startTime] = m;
+    const [, day, monthName, year, startTime, endTime] = m;
 
     const monthMap = {
         January: "01",
@@ -555,8 +433,148 @@ function toIso(str) {
     }
 
     const dd = day.padStart(2, "0");
-    return `${year}-${mm}-${dd}T${startTime}:00`;
+    return `${year}-${mm}-${dd}T${startDate ? startTime : endTime}:00`;
 }
+
+const updateTimer = () => {
+    fetch(apiDogPath, requestOptions)
+        .then((response) => response.text())
+        .then((responseObj) => {
+            const targetSection = document.querySelector("#timer-section");
+            const leaderBoardSection = document.querySelector("#section-leaderboard");
+            const formSection = document.querySelector("#section-form");
+
+            const obj = JSON.parse(responseObj);
+            const { schedule, timeZone, currentTime } = obj;
+            const { dateAndTime } = schedule;
+            const keys = Object.keys(dateAndTime);
+            const sd = toIso(dateAndTime[keys[0]]);
+            const ed = toIso(dateAndTime[keys[keys.length - 1]], false);
+            const targetMoment = moment.tz(sd, timeZone);
+            const targetEndMoment = moment.tz(ed, timeZone);
+
+            if (!targetSection) return;
+            const now = Math.floor(new Date(currentTime).getTime() / 1000);
+            let interval =
+                Math.floor(new Date(targetMoment._i).getTime() / 1000) - now;
+            let endInterval =
+                Math.floor(new Date(targetEndMoment._i).getTime() / 1000) - now;
+
+            if (interval > 0 || endInterval <= 0) {
+                leaderBoardSection.style.display = "none";
+                formSection.style.display = "none";
+            }
+            if (interval <= 0) {
+                targetSection.style.display = "none";
+                return;
+            }
+            let offset = 0;
+            let targetStartMs = 0;
+            let targetEndMs = 0;
+            let timerId = null;
+
+            const D = document.getElementById.bind(document);
+            const daysEl = D("pre-start-timer-days");
+            const hoursEl = D("pre-start-timer-hours");
+            const minsEl = D("pre-start-timer-minutes");
+            const secsEl = D("pre-start-timer-seconds");
+
+            async function syncWithServer() {
+                const resp = await fetch(apiDogPath, {
+                    method: "GET",
+                    redirect: "follow"
+                });
+                const { timeZone, currentTime, schedule } = await resp.json();
+
+                const nsd = toIso(dateAndTime[keys[0]]);
+                const ned = toIso(dateAndTime[keys[keys.length - 1]], false);
+
+                const serverNowMs = new Date(currentTime).getTime();
+                const clientNowMs = Date.now();
+
+                offset = serverNowMs - clientNowMs;
+                targetStartMs = moment.tz(nsd, timeZone).valueOf();
+                targetEndMs = moment.tz(ned, timeZone).valueOf();
+            }
+
+            function updateDisplay(remainingS) {
+                if (remainingS < 0) {
+                    document.querySelector("#timer-section").style.display = "none";
+                    window.location.reload();
+                    clearTimeout(timerId);
+                    return;
+                }
+
+                const days = Math.floor(remainingS / 86400);
+                const hours = Math.floor((remainingS % 86400) / 3600);
+                const minutes = Math.floor((remainingS % 3600) / 60);
+                const seconds = remainingS % 60;
+
+                const pad = (n) => n.toString().padStart(2, "0");
+
+                [
+                    [daysEl, days],
+                    [hoursEl, hours],
+                    [minsEl, minutes],
+                    [secsEl, seconds]
+                ].forEach(([el, val]) => {
+                    const newVal = pad(val);
+                    if (el.dataset.number !== newVal) {
+                        const currId = el.id.replace("pre-start-timer-", "");
+                        const prevCell =
+                            currId === "seconds"
+                                ? minutes + hours + days
+                                : currId === "minutes"
+                                    ? hours + days
+                                    : currId === "hours"
+                                        ? days
+                                        : 0;
+                        if (newVal <= 0 && prevCell <= 0) {
+                            el.parentNode.classList.remove("timer-cell-active");
+                        } else {
+                            if (!el.parentNode.classList.contains("timer-cell-active")) {
+                                el.parentNode.classList.add("timer-cell-active");
+                            }
+                        }
+
+                        el.dataset.prevNumber = el.dataset.number;
+                        el.dataset.number = newVal;
+                        setTimeout(() => {
+                            el.textContent = newVal;
+                        }, 500);
+                    }
+                });
+            }
+
+            function startTimerLoop() {
+                function tick() {
+                    const nowMs = Date.now() + offset;
+                    const remainingS = Math.floor((targetStartMs - nowMs) / 1000);
+
+                    updateDisplay(remainingS, offset);
+
+                    if (remainingS >= 0) {
+                        const msUntilNextFullSec = 1000 - ((Date.now() + offset) % 1000);
+                        timerId = setTimeout(tick, msUntilNextFullSec);
+                    }
+                }
+                tick();
+            }
+
+            (async function init() {
+                await syncWithServer();
+                startTimerLoop();
+
+                setInterval(syncWithServer, 60_000);
+
+                document.addEventListener("visibilitychange", () => {
+                    if (!document.hidden) {
+                        syncWithServer();
+                    }
+                });
+            })();
+        });
+};
 
 function offsetTime(isoStr, timeZone) {
     const timeInTimeZone = moment.tz(timeZone);
@@ -578,7 +596,7 @@ const updateGCal = (obj, keys, tornamentName, timeZone, formActionUrl) => {
     const gCalBtn = document.getElementById("google-cal-link");
     if (!gCalBtn) return;
     const sd = toIso(obj[Object.keys(obj)[0]]);
-    const ed = toIso(obj[Object.keys(obj)[keys.length - 1]]);
+    const ed = toIso(obj[Object.keys(obj)[keys.length - 1]], false);
     const googleCalendarLink = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${tornamentName
         .replaceAll(" ", "+")
         .replaceAll("&", "and")}&dates=${sd
@@ -603,14 +621,7 @@ const updateDates = () => {
         .then((response) => response.text())
         .then((responseObj) => {
             const obj = JSON.parse(responseObj);
-            const {
-                startDateTime,
-                endDateTime,
-                tornamentName,
-                timeZone,
-                formActionUrl,
-                schedule
-            } = obj;
+            const { tornamentName, timeZone, formActionUrl, schedule } = obj;
 
             const keys = Object.keys(schedule.dateAndTime);
             const datesLength = Object.keys(schedule.dateAndTime).length;
@@ -644,7 +655,6 @@ const updateDates = () => {
                 } else {
                     let resultStr = "";
                     keys.forEach((key) => {
-                        console.log(schedule.dateAndTime[key]);
                         const d = dateStringToObj(schedule.dateAndTime[key]);
                         resultStr += `
                ${tornamentName}${keys.length > 1 ? ` ${key}` : ""
