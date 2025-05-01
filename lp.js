@@ -527,6 +527,74 @@ const updateForm = () => {
 //     });
 // };
 
+function toIso(str) {
+    const regex = /(\d+)(?:st|nd|rd|th)\s+([A-Za-z]+),\s+(\d{4})\s*\/\s*(\d{1,2}:\d{2})/;
+    const m = str.match(regex);
+    if (!m) {
+        throw new Error("Не удалось распознать дату: " + str);
+    }
+    const [, day, monthName, year, startTime] = m;
+
+    const monthMap = {
+        January: "01",
+        February: "02",
+        March: "03",
+        April: "04",
+        May: "05",
+        June: "06",
+        July: "07",
+        August: "08",
+        September: "09",
+        October: "10",
+        November: "11",
+        December: "12"
+    };
+    const mm = monthMap[monthName];
+    if (!mm) {
+        throw new Error("Неизвестный месяц: " + monthName);
+    }
+
+    const dd = day.padStart(2, "0");
+    return `${year}-${mm}-${dd}T${startTime}:00`;
+}
+
+function offsetTime(isoStr, timeZone) {
+    const timeInTimeZone = moment.tz(timeZone);
+    const offsetMinutes = timeInTimeZone.utcOffset();
+    const offsetHours = offsetMinutes / 60;
+    const timeToArray = String(isoStr).slice(-8).split(":");
+    let newTime =
+        Number(timeToArray[0]) - offsetHours > 24
+            ? Number(timeToArray[0]) - offsetHours - 24
+            : Number(timeToArray[0]) - offsetHours;
+    if (String(newTime).length < 2) {
+        newTime = `0${newTime}`;
+    }
+    timeToArray[0] = newTime;
+    return timeToArray.join("");
+}
+
+const updateGCal = (obj, keys, tornamentName, timeZone, formActionUrl) => {
+    const gCalBtn = document.getElementById("google-cal-link");
+    if (!gCalBtn) return;
+    const sd = toIso(obj[Object.keys(obj)[0]]);
+    const ed = toIso(obj[Object.keys(obj)[keys.length - 1]]);
+    const googleCalendarLink = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${tornamentName
+        .replaceAll(" ", "+")
+        .replaceAll("&", "and")}&dates=${sd
+            .substr(0, 10)
+            .replaceAll("-", "")}T${offsetTime(sd, timeZone)}Z/${ed
+                .substr(0, 10)
+                .replaceAll("-", "")}T${offsetTime(
+                    ed,
+                    timeZone
+                )}Z&details=${tornamentName
+                    .replaceAll(" ", "+")
+                    .replaceAll("&", "and")}&location=${formActionUrl}&trp=true`;
+
+    gCalBtn.href = googleCalendarLink;
+};
+
 const updateDates = () => {
     const target = document.getElementById("schedule-render");
     if (!target) return;
@@ -579,14 +647,15 @@ const updateDates = () => {
                         console.log(schedule.dateAndTime[key]);
                         const d = dateStringToObj(schedule.dateAndTime[key]);
                         resultStr += `
-               ${tornamentName} ${key} starts on <strong>${d.date}, ${d.year} at ${d.startTime}</strong>, and ends on <strong>${d.date}, ${d.year} at ${d.endTime}</strong>.<br>&nbsp;<br>
+               ${tornamentName}${keys.length > 1 ? ` ${key}` : ""
+                            } starts on <strong>${d.date}, ${d.year} at ${d.startTime
+                            }</strong>, and ends on <strong>${d.date}, ${d.year} at ${d.endTime
+                            }</strong>.<br>&nbsp;<br>
           `;
                         datesInRules.innerHTML = resultStr;
                     });
                 }
             }
-
-            const renderSingleDate = ``;
 
             const renderMultipleDates = () => {
                 const tabButtons = () => {
@@ -717,6 +786,13 @@ const updateDates = () => {
                 ? renderMultipleDates()
                 : renderPeriod();
             initScheduleTabs();
+            updateGCal(
+                schedule.dateAndTime,
+                keys,
+                tornamentName,
+                timeZone,
+                formActionUrl
+            );
         });
 };
 
