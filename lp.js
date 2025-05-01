@@ -9,6 +9,7 @@ const initScheduleTabs = () => {
     if (tabs.length < 2) return;
     document.addEventListener("click", (e) => {
         const currTab = e.target.closest(".schedule-tabs_button");
+        if (!currTab) return;
         if (currTab.classList.contains(ACTIVE)) return;
         const activeTab = scheduleTabs.querySelector(
             `.schedule-tabs_button.${ACTIVE}`
@@ -955,6 +956,17 @@ const updateLeaderBoard = () => {
         lw.innerHTML = newMarkup;
     };
 };
+
+const setGameLinks = () => {
+    const gameIcons = document.querySelectorAll("[data-game-link]");
+    if (gameIcons.length <= 0) return;
+    gameIcons.forEach(icon => {
+        const link = "https://playson.com/game/" + icon.getAttribute("data-game-link");
+        icon.href = link;
+    })
+}
+
+setGameLinks();
 
 updateDates();
 updateTimer();
