@@ -437,6 +437,25 @@ function toIso(str, startDate = true) {
     return `${year}-${mm}-${dd}T${startDate ? startTime : endTime}:00`;
 }
 
+function formatInterval(startStr, endStr) {
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+
+    // разница в миллисекундах
+    let diffMs = end - start;
+    // если нужно всегда положительное значение:
+    if (diffMs < 0) diffMs = -diffMs;
+
+    // сколько целых минут
+    const totalMinutes = Math.floor(diffMs / 1000 / 60);
+
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes - days * 60 * 24) / 60);
+    const minutes = totalMinutes - days * 60 * 24 - hours * 60;
+
+    return `${days}d ${hours}h ${minutes}m`;
+}
+
 const updateTimer = () => {
     fetch(apiDogPath, requestOptions)
         .then((response) => response.text())
@@ -740,14 +759,17 @@ const updateDates = () => {
             const renderPeriod = () => {
                 const d = dateStringToObj(schedule.dateAndTime[keys[0]]);
                 const ed = dateStringToObj(schedule.dateAndTime[keys[keys.length - 1]]);
+
+                const startDateIso = toIso(schedule.dateAndTime[keys[0]]);
+                const endDateIso = toIso(
+                    schedule.dateAndTime[keys[keys.length - 1]],
+                    false
+                );
                 const sh = Number(d.startTime.split(":")[0]);
                 const sm = Number(d.startTime.split(":")[1]);
                 const eh = Number(d.endTime.split(":")[0]);
                 const em = Number(d.endTime.split(":")[1]);
-                const rangeInMin = eh * 60 + em - (sh * 60 + sm);
-                const rangeStr = `
-            ${Math.round(rangeInMin / 60)}h${rangeInMin % 60 > 0 ? ` ${rangeInMin % 60}m` : ""
-                    }`;
+                const rangeStr = formatInterval(startDateIso, endDateIso);
 
                 return `
         <div class="schedule-tabs">
@@ -960,11 +982,12 @@ const updateLeaderBoard = () => {
 const setGameLinks = () => {
     const gameIcons = document.querySelectorAll("[data-game-link]");
     if (gameIcons.length <= 0) return;
-    gameIcons.forEach(icon => {
-        const link = "https://playson.com/game/" + icon.getAttribute("data-game-link");
+    gameIcons.forEach((icon) => {
+        const link =
+            "https://playson.com/game/" + icon.getAttribute("data-game-link");
         icon.href = link;
-    })
-}
+    });
+};
 
 setGameLinks();
 
