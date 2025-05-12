@@ -708,7 +708,7 @@ const updateDates = () => {
                         const em = Number(d.endTime.split(":")[1]);
                         const rangeInMin = eh * 60 + em - (sh * 60 + sm);
                         const rangeStr = `
-              ${Math.round(rangeInMin / 60)}h${rangeInMin % 60 > 0 ? ` ${rangeInMin % 60}m` : ""
+              ${Math.floor(rangeInMin / 60)}h${rangeInMin % 60 > 0 ? ` ${rangeInMin % 60}m` : ""
                             }`;
 
                         render += `
