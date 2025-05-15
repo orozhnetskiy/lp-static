@@ -122,3 +122,13 @@ a.button {
         position: relative;
     }
 }
+
+.div-block-43.l {
+    max-width: 100% !important;
+}
+
+@media screen and (max-width: 479px) {
+    .div-block-43.l .heading.heading--lg {
+        font-size: 48px !important;
+    }
+}
