@@ -93,18 +93,18 @@ const updateLeaderBoard = () => {
                     switch (key) {
                         case "type":
                             value =
-                                mod === "base"
-                                    ? "&nbsp;"
-                                    : `
+                                mod === "base" ?
+                                    "&nbsp;" :
+                                    `
                 <div class='leaderbord-star ${id}'>
                   <img src='https://cdn.prod.website-files.com/677bda6af407d3b963833347/678047786a40ded56068d3bd_crown-icon-48.avif' loading='lazy' width='48' alt=''>
                 </div>
               `;
                             break;
                         case "name":
-                            value = isEmail(value)
-                                ? maskEmail(row[key])
-                                : row[key].replaceAll("|", "");
+                            value = isEmail(value) ?
+                                maskEmail(row[key]) :
+                                row[key].replaceAll("|", "");
                             break;
                         case "currency":
                             break;
